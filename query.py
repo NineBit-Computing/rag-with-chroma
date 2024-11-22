@@ -21,15 +21,3 @@ results = collection.query(
 )
 
 print(results)
-"""
-for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
-    print(f"Text: {chunk[0].page_content}")  
-    print(f"Metadata: {chunk[0].metadata}") 
-
-for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
-    print(f"Chunk {i + 1}:")
-    print(f"Text: {chunk[7].page_content}")  
-    #print(f"Embedding (Vector): {embedding}")  
-    print("-" * 50)  
- 
-"""
