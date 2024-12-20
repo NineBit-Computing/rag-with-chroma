@@ -9,13 +9,7 @@ CHROMA_HOST = os.getenv("CHROMA_HOST", "localhost")
 CHROMA_PORT = int(os.getenv("CHROMA_PORT", 8000))
 COLLECTION_NAME = os.getenv("CHROMA_COLLECTION_NAME", "default_collection")
 PDF_PATHS = [
-    "/home/khushi/pincone/civics1.pdf",
-    "/home/khushi/pincone/history1.pdf",
-    "/home/khushi/pincone/eco1.pdf",
-    "/home/khushi/pincone/geo2.pdf",
-    "/home/khushi/pincone/history2.pdf",
-    "/home/khushi/pincone/geo1.pdf",
-    "/home/khushi/pincone/galaxy.pdf"
+    "datasource\\keec101.pdf",
 ]
 
 chroma_client = chromadb.HttpClient(
@@ -56,6 +50,14 @@ def store_chunks_in_chromadb(pdf_paths):
         metadata = [{"source": pdf_name} for _ in range(len(chunks))]
         
         try:
+
+            # collection.add(
+            #     documents=["doc1", "doc2", "doc3", ...],
+            #     embeddings=[[1.1, 2.3, 3.2], [4.5, 6.9, 4.4], [1.1, 2.3, 3.2], ...],
+            #     metadatas=[{"chapter": "3", "verse": "16"}, {"chapter": "3", "verse": "5"}, {"chapter": "29", "verse": "11"}, ...],
+            #     ids=["id1", "id2", "id3", ...]
+            # )
+
             collection.add(
                 ids=chunk_ids,
                 embeddings=embeddings,
@@ -69,27 +71,38 @@ def store_chunks_in_chromadb(pdf_paths):
     print("All PDFs processed and chunks stored in ChromaDB.")
     return collection
     
-collection = store_chunks_in_chromadb(PDF_PATHS)
+# collection = store_chunks_in_chromadb(PDF_PATHS)
 
-try:
-    query_text = "atal bhujal yojna"
-    results = collection.query(
-        query_texts=[query_text],
-        n_results=5
-    )
+if __name__ == "__main__":
+    print(f'main function invoked')
+    try:
+        dbresponse = store_chunks_in_chromadb(PDF_PATHS)
+        print(f'dbresponse is : {dbresponse}')
+    except Exception as e:
+        print(f"Error querying the database: {e}")
 
-    if not results['ids'] or not results['ids'][0]:
-        print("No results found for the query.")
-    else:
-        print("Query Results:")
-        for idx, (chunk_id, document, metadata, score) in enumerate(
-            zip(results['ids'][0], results['documents'][0], results['metadatas'][0], results['distances'][0]), 1
-        ):
-            print(f"Rank {idx}:")
-            print(f"Chunk ID: {chunk_id}")
-            print(f"Text: {document}")
-            print("-" * 50)
+else:
+    print(f'Invoked as module')
 
-except Exception as e:
-    print(f"Error querying the collection: {e}")
+# try:
+#     query_text = "atal bhujal yojna"
+#     results = collection.query(
+#         query_texts=[query_text],
+#         n_results=5
+#     )
+
+#     if not results['ids'] or not results['ids'][0]:
+#         print("No results found for the query.")
+#     else:
+#         print("Query Results:")
+#         for idx, (chunk_id, document, metadata, score) in enumerate(
+#             zip(results['ids'][0], results['documents'][0], results['metadatas'][0], results['distances'][0]), 1
+#         ):
+#             print(f"Rank {idx}:")
+#             print(f"Chunk ID: {chunk_id}")
+#             print(f"Text: {document}")
+#             print("-" * 50)
+
+# except Exception as e:
+#     print(f"Error querying the collection: {e}")
 

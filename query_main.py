@@ -3,6 +3,7 @@ import chromadb
 from chromadb.config import Settings
 from sentence_transformers import CrossEncoder
 import cohere
+from sentence_transformers import SentenceTransformer
 
 co = cohere.Client('A30oAcq9woG1QXsN2ZWE5oNEUSPjOy3lLqXFK7bK')
 
@@ -15,16 +16,22 @@ chroma_client = chromadb.HttpClient(
     port=CHROMA_PORT,
     settings=Settings()
 )
+
+
+
 """Function for giving related chunks"""
 def query_chromadb(query_text): 
     try:
-        collection = chroma_client.get_or_create_collection(name=COLLECTION_NAME)
+        collection = chroma_client.get_or_create_collection(name=COLLECTION_NAME)        
         print(f"Connected to collection: {COLLECTION_NAME}")
+        embedding_function = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+        my_query_embeddings = embedding_function.encode(query_text)
+        # query_texts=[query_text],
         results = collection.query(
-            query_texts=[query_text],
+            query_embeddings=my_query_embeddings,
             n_results=3
         )
-
+        print("hello")
         if not results['ids'] or not results['ids'][0]:
             print("No results found for the query.")
         else:
@@ -34,31 +41,6 @@ def query_chromadb(query_text):
     except Exception as e:
         print(f"Error connecting to ChromaDB collection: {e}")
 
-"""For reranking the chunks"""
-def rerank_results(query_text, results):
-    try:
-
-        candidate_texts = results['documents'][0]
-        candidate_ids = results['ids'][0]          
-        reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2', device='cpu')
-
-        scores = reranker.predict([(query_text, candidate) for candidate in candidate_texts])
-
-        reranked_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)
-
-        print("Reranked Query Results:")
-        for rank, idx in enumerate(reranked_indices, 1):
-            print(f"Rank {rank}:")
-            print(f"Chunk ID: {candidate_ids[idx]}")
-            print(f"Score: {scores[idx]:.4f}")
-            print(f"Text: {candidate_texts[idx]}")
-            print("-" * 50)
-
-        best_chunk_text = [candidate_texts[i] for i in reranked_indices] 
-        return best_chunk_text
-    except Exception as e:
-        print(f"Error during re-ranking: {e}")
-        return None, None
 
 """For generating the answer"""
 def generate_answer(query_text, context):
@@ -86,6 +68,4 @@ while True:
 
     results = query_chromadb(query_text)
     
-    best_chunk_text = rerank_results(query_text, results)
-
-    generate_answer(query_text, best_chunk_text)
+    generate_answer(query_text, results)
